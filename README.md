@@ -28,6 +28,10 @@ Rate limiting settings can be changed in ip_conn_state.ex, by modifying the foll
 ```
 In the above example, the acceptable request rate is 3 requests per 4 seconds.
 
+## Live Demo
+
+A live demo of the project is available [here](http://82.180.139.239:4000/pub/main.html).
+
 ## Troubleshooting
 
 On some Linux distributions, there aren't up-to-date packages available for Erlang and Elixir. I'd recommend using [asdf](https://asdf-vm.com/) for installation and management.
