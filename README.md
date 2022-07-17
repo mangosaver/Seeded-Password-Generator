@@ -12,7 +12,11 @@ The frontend is static web content, served by [plug_cowboy](https://github.com/e
 
 If a valid salt is not specified in priv/salt.txt, one will be generated upon startup. To generate a new salt, you can delete the file completely, or simply erase the contents. The salt should be kept secret; if it is found, the security of the system is greatly reduced.
 
-To run the project, [install Elixir](https://elixir-lang.org/install.html) if you haven't, and run:
+To run the project, [install Elixir](https://elixir-lang.org/install.html) and run:
+
+`mix deps.get`
+
+Followed by:
 
 `mix run --no-halt`
 
@@ -23,6 +27,10 @@ Rate limiting settings can be changed in ip_conn_state.ex, by modifying the foll
 @period_ms 4_000
 ```
 In the above example, the acceptable request rate is 3 requests per 4 seconds.
+
+## Troubleshooting
+
+On some Linux distributions, there aren't up-to-date packages available for Erlang and Elixir. I'd recommend using [asdf](https://asdf-vm.com/) for installation and management.
 
 ## Future Work
 
