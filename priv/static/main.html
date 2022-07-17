@@ -1,0 +1,129 @@
+<head>
+  <title>Password Manager</title>
+  <link href="https://cdn.skypack.dev/sanitize.css" rel="stylesheet" />
+  <link href="styles.css" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<div id="full-body">
+  <div id="main-panel">
+    <h1>Seeded Password Creator</h1>
+    <div id="mainForm">
+      <input class="inputBox" id="siteUrl" placeholder="Site or service name">
+      <input class="inputBox" id="userPass" placeholder="Master password" type="password" maxlength="1024">
+      <div id="passBarViz">
+        <div id="pbVizChild"></div>
+      </div>
+      <span>Must be 16 characters minimum</span>
+      <button id="genPass" disabled onclick="getPassword()">Generate Password</button>
+      <div id="pwAndCopy">
+        <input id="generatedPass" readonly onclick="this.setSelectionRange(0, 9999)" value="">
+        <button id="copyButton" onclick="copy()">Copy</button>
+      </div>
+    </div>
+  </div>
+  <div id="toast-bar"></div>
+</div>
+
+<script>
+  const TOAST_DISP_MS = 2700;
+
+  const outputField = document.getElementById('generatedPass');
+  const siteUrl = document.getElementById('siteUrl');
+  const userPass = document.getElementById('userPass');
+  const toastBar = document.getElementById('toast-bar');
+  const genPass = document.getElementById('genPass');
+  const passBarViz = document.getElementById('passBarViz');
+
+  siteUrl.addEventListener('change', function() {
+    try {
+      const before = new URL(siteUrl.value);
+      if (hostname.length > 0)
+        siteUrl.value = before.hostname.replace('www.', '');
+    } catch (_) {}
+    updateButtonState();
+  });
+  siteUrl.addEventListener('input', updateButtonState);
+  userPass.addEventListener('input', updateButtonState);
+
+  function updateButtonState() {
+    var widthPercent = (100 * (userPass.value.length / 16));
+    widthPercent = Math.min(widthPercent, 100);
+    passBarViz.children[0].style.width = widthPercent + '%';
+    if (siteUrl.value.length > 2 && userPass.value.length > 15)
+      genPass.removeAttribute('disabled');
+    else
+      genPass.setAttribute('disabled', '');
+  }
+
+  function addToast(toastStr) {
+    const tmpToast = document.createElement('div');
+    tmpToast.className = 'toast show';
+    tmpToast.appendChild(document.createTextNode(toastStr));
+    toastBar.appendChild(tmpToast);
+    setTimeout(() => tmpToast.classList.remove('show'), TOAST_DISP_MS - 500);
+    setTimeout(() => tmpToast.remove(), TOAST_DISP_MS);
+  }
+
+  function getPassword() {
+    if (!window.fetch) {
+      addToast('Your browser does not support this service');
+      return;
+    }
+    genPass.setAttribute('disabled', '');
+    fetch('/gen', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        master: userPass.value,
+        url: siteUrl.value.toLowerCase().replace(/\s+/g, '')
+      }),
+    }).then(resp => resp.text())
+    .then(password => {
+      if (password == 'error') {
+        addToast('Unable to generate password at this time');
+      } else if (password == 'wait') {
+        addToast('Please wait');
+      } else {
+        outputField.value = password;
+        addToast('Password generated successfully');
+      }
+      genPass.removeAttribute('disabled');
+    })
+    .catch(err => {
+      addToast('Unable to contact server');
+      console.log(err);
+      genPass.removeAttribute('disabled');
+    });
+  }
+
+  function copy() {
+    if (!navigator.clipboard) {
+      legacyCopy();
+      return;
+    }
+    navigator.clipboard.writeText(outputField.value)
+    .then(() => {
+      addToast('Copied to clipboard');
+    })
+    .catch(() => {
+      addToast('Unable to access clipboard');      
+    });
+  }
+
+  function legacyCopy() {
+    try {
+      outputField.setSelectionRange(0, 9999);
+      outputField.focus();
+      outputField.select();
+      if (document.execCommand('copy'))
+        addToast('Copied to clipboard');
+      else
+        addToast('Unable to access clipboard');
+      window.getSelection().removeAllRanges();
+    } catch (err) {
+      addToast('Unable to access clipboard');
+    }
+  }
+</script>
